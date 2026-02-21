@@ -1,54 +1,23 @@
+import express from 'express'
 import { supabase } from '../config/supabaseClient.js'
 
-export const getStarHistory = async (req, res) => {
+export const starHistory = express.Router()
+
+starHistory.get('/star-history/:userId', async (req, res) => {
+  const { userId } = req.params
+
   try {
-    const { user_id } = req.params
+    const { data, error } = await supabase
+      .from('star_history')
+      .select('*')
+      .eq('user_id', userId)
 
-    if (!user_id) {
-      return res.status(400).json({
-        success: false,
-        message: "user_id is required"
-      })
+    if (error) {
+      return res.status(400).json({ error: error.message })
     }
 
-    // Check if user exists
-    const { data: user, error: userError } = await supabase
-      .from("users")
-      .select("id")
-      .eq("id", user_id)
-      .single()
-
-    if (userError || !user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found"
-      })
-    }
-
-    // Fetch transaction history
-    const { data: transactions, error: txError } = await supabase
-      .from("star_transactions")
-      .select("*")
-      .eq("user_id", user_id)
-      .order("created_at", { ascending: false })
-
-    if (txError) {
-      return res.status(500).json({
-        success: false,
-        message: txError.message
-      })
-    }
-
-    return res.status(200).json({
-      success: true,
-      total_transactions: transactions.length,
-      transactions
-    })
-
+    res.json(data)
   } catch (err) {
-    return res.status(500).json({
-      success: false,
-      message: err.message
-    })
+    res.status(500).json({ error: 'Server error' })
   }
-}
+})

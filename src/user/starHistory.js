@@ -1,4 +1,4 @@
-import { supabase } from "../../supabaseClient.js"
+import { supabase } from '../config/supabaseClient.js'
 
 export const getStarHistory = async (req, res) => {
   try {

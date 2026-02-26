@@ -1,37 +1,20 @@
-import { supabase } from "../config/supabaseClient.js"
+import express from "express";
+import supabase from "../config/supabaseClient.js";
 
-export const redeemStars = async (req, res) => {
-  try {
-    const { user_id, stars } = req.body
+const router = express.Router();
 
-    if (!user_id || !stars) {
-      return res.status(400).json({
-        success: false,
-        message: "user_id and stars required"
-      })
-    }
+router.post("/", async (req, res) => {
+  const { user_id, stars } = req.body;
 
-    const { data, error } = await supabase.rpc(
-      "redeem_stars_atomic",
-      {
-        p_user_id: user_id,
-        p_stars: stars
-      }
-    )
+  const { data, error } = await supabase
+    .from("star_history")
+    .insert([{ user_id, stars, type: "redeem" }]);
 
-    if (error) {
-      return res.status(500).json({
-        success: false,
-        message: error.message
-      })
-    }
-
-    return res.status(200).json(data)
-
-  } catch (err) {
-    return res.status(500).json({
-      success: false,
-      message: err.message
-    })
+  if (error) {
+    return res.status(400).json({ error: error.message });
   }
-}
+
+  res.json({ message: "Stars redeemed successfully", data });
+});
+
+export default router;

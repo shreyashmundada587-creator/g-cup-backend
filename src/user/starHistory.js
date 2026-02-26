@@ -1,23 +1,21 @@
-import express from 'express'
-import { supabase } from '../config/supabaseClient.js'
+import express from "express";
+import supabase from "../config/supabaseClient.js";
 
-export const starHistory = express.Router()
+const router = express.Router();
 
-starHistory.get('/star-history/:userId', async (req, res) => {
-  const { userId } = req.params
+router.get("/:user_id", async (req, res) => {
+  const { user_id } = req.params;
 
-  try {
-    const { data, error } = await supabase
-      .from('star_history')
-      .select('*')
-      .eq('user_id', userId)
+  const { data, error } = await supabase
+    .from("star_history")
+    .select("*")
+    .eq("user_id", user_id);
 
-    if (error) {
-      return res.status(400).json({ error: error.message })
-    }
-
-    res.json(data)
-  } catch (err) {
-    res.status(500).json({ error: 'Server error' })
+  if (error) {
+    return res.status(400).json({ error: error.message });
   }
-})
+
+  res.json({ data });
+});
+
+export default router;

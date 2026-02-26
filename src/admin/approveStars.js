@@ -1,42 +1,20 @@
-import { supabase } from "../config/supabaseClient.js"
-import crypto from "crypto"
+import express from "express";
+import supabase from "../config/supabaseClient.js";
 
-export const approveStars = async (req, res) => {
-  try {
-    const { bill_id } = req.body
+const router = express.Router();
 
-    if (!bill_id) {
-      return res.status(400).json({
-        success: false,
-        message: "bill_id is required"
-      })
-    }
+router.post("/", async (req, res) => {
+  const { user_id, stars } = req.body;
 
-    const admin_id = req.admin.id
-    const idempotencyKey = crypto.randomUUID()
+  const { data, error } = await supabase
+    .from("star_history")
+    .insert([{ user_id, stars, type: "approved" }]);
 
-    const { data, error } = await supabase.rpc(
-      "approve_bill_atomic",
-      {
-        p_bill_id: bill_id,
-        p_admin_id: admin_id,
-        p_idempotency_key: idempotencyKey
-      }
-    )
-
-    if (error) {
-      return res.status(500).json({
-        success: false,
-        message: error.message
-      })
-    }
-
-    return res.status(200).json(data)
-
-  } catch (err) {
-    return res.status(500).json({
-      success: false,
-      message: err.message
-    })
+  if (error) {
+    return res.status(400).json({ error: error.message });
   }
-}
+
+  res.json({ message: "Stars approved", data });
+});
+
+export default router;

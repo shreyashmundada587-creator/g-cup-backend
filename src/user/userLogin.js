@@ -6,7 +6,6 @@ const router = express.Router();
 router.post("/", async (req, res) => {
   const { email, password } = req.body;
 
-  // Step 1: Login with Supabase Auth
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -19,23 +18,23 @@ router.post("/", async (req, res) => {
   const userId = data.user.id;
   let role = null;
 
-  // Step 2: Check carpenters table
+  // Check carpenters table
   const { data: carpenter } = await supabase
     .from("carpenters")
     .select("*")
-    .eq("id", userId)
+    .eq("user_id", userId)   // ✅ FIXED HERE
     .single();
 
   if (carpenter) {
     role = "carpenter";
   }
 
-  // Step 3: Check staff_profiles table
+  // Check staff_profiles
   if (!role) {
     const { data: staff } = await supabase
       .from("staff_profiles")
       .select("*")
-      .eq("id", userId)
+      .eq("user_id", userId)  // also check this column name
       .single();
 
     if (staff) {
@@ -43,12 +42,12 @@ router.post("/", async (req, res) => {
     }
   }
 
-  // Step 4: Check admins table
+  // Check admins
   if (!role) {
     const { data: admin } = await supabase
       .from("admins")
       .select("*")
-      .eq("id", userId)
+      .eq("user_id", userId)  // also check column name
       .single();
 
     if (admin) {
@@ -56,12 +55,10 @@ router.post("/", async (req, res) => {
     }
   }
 
-  // If no role found
   if (!role) {
     return res.status(403).json({ error: "User role not found" });
   }
 
-  // Step 5: Return custom response
   res.json({
     message: "Login successful",
     role: role,
